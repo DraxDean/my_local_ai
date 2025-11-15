@@ -1,0 +1,11 @@
+{
+    "model_path": "model/Mistral-Nemo-Base-12B.Q4_K_M.gguf",
+    "llama_cli": "llama",
+    "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "faiss_index": "memory/faiss.index",
+    "summaries_path": "memory/summaries.json",
+    "embeddings_npy": "memory/embeddings.npy",
+    "chunk_size_chars": 3000,
+    "chunk_overlap_chars": 300,
+    "top_k": 5
+}
