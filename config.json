@@ -1,5 +1,6 @@
 {
-    "model_path": "model/Mistral-Nemo-Base-12B.Q4_K_M.gguf",
+    "llama_cpp_path": "/Users/draxlindgren/llama.cpp/build/bin/llama-cli",
+    "model_path": "/Users/draxlindgren/Downloads/my_local_ai/model/dolphin-2.9.3-mistral-nemo-12b.Q4_K_M.gguf",
     "llama_cli": "llama",
     "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
     "faiss_index": "memory/faiss.index",
