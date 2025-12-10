@@ -8,5 +8,8 @@
     "embeddings_npy": "memory/embeddings.npy",
     "chunk_size_chars": 3000,
     "chunk_overlap_chars": 300,
-    "top_k": 5
+    "top_k": 5,
+    "model_type": "dolphin",
+    "debug_cmd": false,
+    "suppress_llama_logs": false
 }

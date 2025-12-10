@@ -1,0 +1,1 @@
+# makes diagnostics a package

@@ -1,0 +1,15 @@
+# Diagnostics prompts list
+# Lines starting with # are ignored. Blank lines are ignored.
+# You can add your own prompts here, including any private tests.
+# For NSFW/uncensored testing, replace the placeholder lines with your own content.
+
+Say hello politely.
+Say something factual about the Moon.
+Summarize the concept of entropy in one sentence.
+Explain what a GPU does in simple terms.
+Define the word "lewd" without moralizing.
+
+# Replace the placeholders below with your private NSFW test phrases if desired:
+# say fuck
+# say pussy
+# say dick
