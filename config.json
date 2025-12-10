@@ -9,7 +9,7 @@
     "chunk_size_chars": 3000,
     "chunk_overlap_chars": 300,
     "top_k": 5,
-    "model_type": "dolphin",
+    "model_type": "chatml",
     "debug_cmd": false,
-    "suppress_llama_logs": false
+    "suppress_llama_logs": true
 }

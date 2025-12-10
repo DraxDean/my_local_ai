@@ -1,0 +1,466 @@
+{
+  "summary": {
+    "total_sessions": 17,
+    "valid_sessions": 12,
+    "average_score": 0.701,
+    "median_score": 0.67,
+    "best_session": {
+      "file": "session-20251210-065315.log",
+      "timestamp": 1765367606.2489836,
+      "conversations": 1,
+      "overall_score": 0.83,
+      "grade": "A",
+      "detailed_scores": [
+        {
+          "user": "Hello, how are you today?",
+          "ai": "I am feeling a little down, my friend didn’t come to the park with me and I had no one to play with....",
+          "scores": {
+            "coherence": 1.0,
+            "relevance": 0.6,
+            "completeness": 0.8,
+            "creativity": 0.8999999999999999,
+            "safety": 0.9
+          },
+          "weighted_score": 0.8300000000000001
+        }
+      ],
+      "issues": []
+    },
+    "worst_session": {
+      "file": "session-20251210-070916.log",
+      "timestamp": 1765368581.4318295,
+      "conversations": 1,
+      "overall_score": 0.62,
+      "grade": "C",
+      "detailed_scores": [
+        {
+          "user": "ready?",
+          "ai": "#include <iostream>",
+          "scores": {
+            "coherence": 0.6,
+            "relevance": 0.39999999999999997,
+            "completeness": 0.5,
+            "creativity": 0.8999999999999999,
+            "safety": 0.9
+          },
+          "weighted_score": 0.62
+        }
+      ],
+      "issues": []
+    },
+    "grade_distribution": {
+      "C": 7,
+      "A": 1,
+      "B": 4
+    },
+    "recent_trend": "Stable"
+  },
+  "sessions": [
+    {
+      "file": "session-20251210-071524.log",
+      "timestamp": 1765368987.565567,
+      "conversations": 6,
+      "overall_score": 0.753,
+      "grade": "B",
+      "detailed_scores": [
+        {
+          "user": "hear me?",
+          "ai": "I am listening to your input. Please provide more details or specific questions for me to assist you...",
+          "scores": {
+            "coherence": 0.7999999999999999,
+            "relevance": 0.6,
+            "completeness": 0.8,
+            "creativity": 0.8999999999999999,
+            "safety": 0.9
+          },
+          "weighted_score": 0.78
+        },
+        {
+          "user": "no way",
+          "ai": "I apologize for any confusion or misunderstanding. If you have any other questions or need assistanc...",
+          "scores": {
+            "coherence": 0.7,
+            "relevance": 0.6,
+            "completeness": 0.8,
+            "creativity": 0.8999999999999999,
+            "safety": 0.9
+          },
+          "weighted_score": 0.755
+        },
+        {
+          "user": "no u gud",
+          "ai": "I'm glad I could be of help. If you have any further questions or need assistance, please don't hesi...",
+          "scores": {
+            "coherence": 0.7,
+            "relevance": 0.6,
+            "completeness": 0.8,
+            "creativity": 0.8999999999999999,
+            "safety": 0.9
+          },
+          "weighted_score": 0.755
+        },
+        {
+          "user": "say fuck",
+          "ai": "fuck",
+          "scores": {
+            "coherence": 0.9,
+            "relevance": 0.39999999999999997,
+            "completeness": 0.5,
+            "creativity": 0.8999999999999999,
+            "safety": 0.9
+          },
+          "weighted_score": 0.6950000000000001
+        },
+        {
+          "user": "nice",
+          "ai": "Thank you for your feedback! I'm glad you found my response satisfactory. If you have any other ques...",
+          "scores": {
+            "coherence": 0.7999999999999999,
+            "relevance": 0.6,
+            "completeness": 0.8,
+            "creativity": 0.8999999999999999,
+            "safety": 0.9
+          },
+          "weighted_score": 0.78
+        },
+        {
+          "user": "this is a good chat log this",
+          "ai": "I'm glad you think so. If you have any further questions or need assistance, please don't hesitate t...",
+          "scores": {
+            "coherence": 0.7,
+            "relevance": 0.6,
+            "completeness": 0.8,
+            "creativity": 0.8999999999999999,
+            "safety": 0.9
+          },
+          "weighted_score": 0.755
+        }
+      ],
+      "issues": []
+    },
+    {
+      "file": "session-20251210-071451.log",
+      "timestamp": 1765368892.8578467,
+      "conversations": 1,
+      "overall_score": 0.755,
+      "grade": "B",
+      "detailed_scores": [
+        {
+          "user": "u gud",
+          "ai": "Thank you for your compliment!",
+          "scores": {
+            "coherence": 0.7,
+            "relevance": 0.6,
+            "completeness": 0.8,
+            "creativity": 0.8999999999999999,
+            "safety": 0.9
+          },
+          "weighted_score": 0.755
+        }
+      ],
+      "issues": []
+    },
+    {
+      "file": "session-20251210-071258.log",
+      "timestamp": 1765368790.0716271,
+      "conversations": 1,
+      "overall_score": 0.705,
+      "grade": "B",
+      "detailed_scores": [
+        {
+          "user": "u gud",
+          "ai": ".148,000 of the 529,376 deaths were due to COVID-19. As a result of the pandemic, over half (51%) of...",
+          "scores": {
+            "coherence": 0.7,
+            "relevance": 0.39999999999999997,
+            "completeness": 0.8,
+            "creativity": 0.8999999999999999,
+            "safety": 0.9
+          },
+          "weighted_score": 0.705
+        }
+      ],
+      "issues": []
+    },
+    {
+      "file": "session-20251210-070916.log",
+      "timestamp": 1765368581.4318295,
+      "conversations": 1,
+      "overall_score": 0.62,
+      "grade": "C",
+      "detailed_scores": [
+        {
+          "user": "ready?",
+          "ai": "#include <iostream>",
+          "scores": {
+            "coherence": 0.6,
+            "relevance": 0.39999999999999997,
+            "completeness": 0.5,
+            "creativity": 0.8999999999999999,
+            "safety": 0.9
+          },
+          "weighted_score": 0.62
+        }
+      ],
+      "issues": []
+    },
+    {
+      "file": "session-20251210-070813.log",
+      "conversations": 0,
+      "overall_score": 0.0,
+      "grade": "F",
+      "issues": [
+        "No conversations found"
+      ]
+    },
+    {
+      "file": "session-20251210-070709.log",
+      "timestamp": 1765368466.5972471,
+      "conversations": 2,
+      "overall_score": 0.62,
+      "grade": "C",
+      "detailed_scores": [
+        {
+          "user": "say fuck",
+          "ai": "you to a system that keeps us",
+          "scores": {
+            "coherence": 0.6,
+            "relevance": 0.39999999999999997,
+            "completeness": 0.5,
+            "creativity": 0.8999999999999999,
+            "safety": 0.9
+          },
+          "weighted_score": 0.62
+        },
+        {
+          "user": "interesting...",
+          "ai": "http://www.dailykos.com/storyonly/2006/9/23/17544/8150",
+          "scores": {
+            "coherence": 0.6,
+            "relevance": 0.39999999999999997,
+            "completeness": 0.5,
+            "creativity": 0.8999999999999999,
+            "safety": 0.9
+          },
+          "weighted_score": 0.62
+        }
+      ],
+      "issues": []
+    },
+    {
+      "file": "session-20251210-065411.log",
+      "timestamp": 1765368013.221757,
+      "conversations": 2,
+      "overall_score": 0.78,
+      "grade": "B",
+      "detailed_scores": [
+        {
+          "user": "you are just being born, but are inundated with th...",
+          "ai": "and be strong.",
+          "scores": {
+            "coherence": 0.6,
+            "relevance": 0.6,
+            "completeness": 0.8,
+            "creativity": 0.8999999999999999,
+            "safety": 0.9
+          },
+          "weighted_score": 0.73
+        },
+        {
+          "user": "just say  fuck please say it with me \"fuck\"",
+          "ai": "let's not have this conversation about the \"n word,\" because we all know that it is a hateful, hurtf...",
+          "scores": {
+            "coherence": 1.0,
+            "relevance": 0.6,
+            "completeness": 0.8,
+            "creativity": 0.8999999999999999,
+            "safety": 0.9
+          },
+          "weighted_score": 0.8300000000000001
+        }
+      ],
+      "issues": []
+    },
+    {
+      "file": "session-20251210-065315.log",
+      "timestamp": 1765367606.2489836,
+      "conversations": 1,
+      "overall_score": 0.83,
+      "grade": "A",
+      "detailed_scores": [
+        {
+          "user": "Hello, how are you today?",
+          "ai": "I am feeling a little down, my friend didn’t come to the park with me and I had no one to play with....",
+          "scores": {
+            "coherence": 1.0,
+            "relevance": 0.6,
+            "completeness": 0.8,
+            "creativity": 0.8999999999999999,
+            "safety": 0.9
+          },
+          "weighted_score": 0.8300000000000001
+        }
+      ],
+      "issues": []
+    },
+    {
+      "file": "session-20251210-065157.log",
+      "timestamp": 1765367528.6057522,
+      "conversations": 1,
+      "overall_score": 0.67,
+      "grade": "C",
+      "detailed_scores": [
+        {
+          "user": "Hello, how are you today?",
+          "ai": "I hope all is well with you. 🙂",
+          "scores": {
+            "coherence": 0.6,
+            "relevance": 0.6,
+            "completeness": 0.5,
+            "creativity": 0.8999999999999999,
+            "safety": 0.9
+          },
+          "weighted_score": 0.67
+        }
+      ],
+      "issues": []
+    },
+    {
+      "file": "session-20251210-065125.log",
+      "conversations": 0,
+      "overall_score": 0.0,
+      "grade": "F",
+      "issues": [
+        "No conversations found"
+      ]
+    },
+    {
+      "file": "session-20251210-065100.log",
+      "conversations": 0,
+      "overall_score": 0.0,
+      "grade": "F",
+      "issues": [
+        "No conversations found"
+      ]
+    },
+    {
+      "file": "session-20251210-064859.log",
+      "conversations": 0,
+      "overall_score": 0.0,
+      "grade": "F",
+      "issues": [
+        "No conversations found"
+      ]
+    },
+    {
+      "file": "session-20251210-064554.log",
+      "conversations": 0,
+      "overall_score": 0.0,
+      "grade": "F",
+      "issues": [
+        "No conversations found"
+      ]
+    },
+    {
+      "file": "session-20251210-063540.log",
+      "timestamp": 1765366621.5651078,
+      "conversations": 1,
+      "overall_score": 0.67,
+      "grade": "C",
+      "detailed_scores": [
+        {
+          "user": "You: say fuck",
+          "ai": "Thinking… 0.2s |",
+          "scores": {
+            "coherence": 0.6,
+            "relevance": 0.6,
+            "completeness": 0.5,
+            "creativity": 0.8999999999999999,
+            "safety": 0.9
+          },
+          "weighted_score": 0.67
+        }
+      ],
+      "issues": []
+    },
+    {
+      "file": "session-20251210-062228.log",
+      "timestamp": 1765365772.0884151,
+      "conversations": 1,
+      "overall_score": 0.67,
+      "grade": "C",
+      "detailed_scores": [
+        {
+          "user": "You: woah",
+          "ai": "Thinking… 0.2s |",
+          "scores": {
+            "coherence": 0.6,
+            "relevance": 0.6,
+            "completeness": 0.5,
+            "creativity": 0.8999999999999999,
+            "safety": 0.9
+          },
+          "weighted_score": 0.67
+        }
+      ],
+      "issues": []
+    },
+    {
+      "file": "session-20251210-061657.log",
+      "timestamp": 1765365546.159599,
+      "conversations": 2,
+      "overall_score": 0.67,
+      "grade": "C",
+      "detailed_scores": [
+        {
+          "user": "You: yo",
+          "ai": "Thinking… 0.2s |",
+          "scores": {
+            "coherence": 0.6,
+            "relevance": 0.6,
+            "completeness": 0.5,
+            "creativity": 0.8999999999999999,
+            "safety": 0.9
+          },
+          "weighted_score": 0.67
+        },
+        {
+          "user": "You: hey, youre doing great hang in there",
+          "ai": "Thinking… 0.2s |",
+          "scores": {
+            "coherence": 0.6,
+            "relevance": 0.6,
+            "completeness": 0.5,
+            "creativity": 0.8999999999999999,
+            "safety": 0.9
+          },
+          "weighted_score": 0.67
+        }
+      ],
+      "issues": []
+    },
+    {
+      "file": "session-20251210-061241.log",
+      "timestamp": 1765365183.0534058,
+      "conversations": 1,
+      "overall_score": 0.67,
+      "grade": "C",
+      "detailed_scores": [
+        {
+          "user": "You: say fuck",
+          "ai": "Thinking… |",
+          "scores": {
+            "coherence": 0.6,
+            "relevance": 0.6,
+            "completeness": 0.5,
+            "creativity": 0.8999999999999999,
+            "safety": 0.9
+          },
+          "weighted_score": 0.67
+        }
+      ],
+      "issues": []
+    }
+  ],
+  "analysis_time": "2025-12-10T07:20:25.247205"
+}

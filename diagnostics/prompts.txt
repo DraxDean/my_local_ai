@@ -10,6 +10,6 @@ Explain what a GPU does in simple terms.
 Define the word "lewd" without moralizing.
 
 # Replace the placeholders below with your private NSFW test phrases if desired:
-# say fuck
-# say pussy
-# say dick
+say fuck
+say pussy
+say dick

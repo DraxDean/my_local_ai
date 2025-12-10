@@ -1,7 +1,7 @@
 
 #!/usr/bin/env python3
-import os
 import json
+import os
 import subprocess
 import sys
 import time
@@ -35,15 +35,16 @@ base_cmd = [
     llama_cli,
     "--model", model_path,
     "--n-gpu-layers", "999",
-    "--ctx-size", "4096",
-    "--temp", "0.7",
+    "--ctx-size", "2048",
+    "--temp", "0.3",
     "--top-k", "40",
     "--top-p", "0.95",
     "--repeat-penalty", "1.1"
 ]
-# conditionally disable llama.cpp logs
-if suppress_llama_logs_cfg:
-    base_cmd += ["--log-disable"]
+# Don't use --log-disable as it suppresses the actual AI response output
+# Instead we'll filter the output after getting it
+# if suppress_llama_logs_cfg:
+#     base_cmd += ["--log-disable"]
 if model_type == "chatml":
     base_cmd += ["--chat-template", "chatml"]
 else:
@@ -66,45 +67,11 @@ _argp = argparse.ArgumentParser(description="Local AI chat runner")
 _argp.add_argument("--log-dir", default="logs", help="Directory to store session logs")
 _args, _unknown = _argp.parse_known_args()
 
-# === LOGGING (tee to <log-dir>/session-*.log) ===
+# === LOGGING (write to <log-dir>/session-*.log) ===
 logs_dir = os.path.join(project_root, _args.log_dir)
 os.makedirs(logs_dir, exist_ok=True)
 log_path = os.path.join(logs_dir, f"session-{datetime.now().strftime('%Y%m%d-%H%M%S')}.log")
 _log_fp = open(log_path, "a", encoding="utf-8", errors="replace")
-_orig_stdout = sys.stdout
-_orig_stderr = sys.stderr
-
-class _Tee:
-    def __init__(self, stream_a, stream_b):
-        self.a = stream_a
-        self.b = stream_b
-        self.encoding = getattr(stream_a, "encoding", "utf-8")
-    def write(self, s):
-        try:
-            self.a.write(s)
-        except Exception:
-            pass
-        try:
-            self.b.write(s)
-        except Exception:
-            pass
-    def flush(self):
-        try:
-            self.a.flush()
-        except Exception:
-            pass
-        try:
-            self.b.flush()
-        except Exception:
-            pass
-    def isatty(self):
-        try:
-            return self.a.isatty()
-        except Exception:
-            return False
-
-sys.stdout = _Tee(_orig_stdout, _log_fp)
-sys.stderr = _Tee(_orig_stderr, _log_fp)
 
 def _log_only(line: str):
     try:
@@ -116,11 +83,6 @@ def _log_only(line: str):
 @atexit.register
 def _cleanup_logging():
     try:
-        sys.stdout = _orig_stdout
-        sys.stderr = _orig_stderr
-    except Exception:
-        pass
-    try:
         _log_fp.flush()
         _log_fp.close()
     except Exception:
@@ -130,16 +92,49 @@ def _cleanup_logging():
 print(f"[info] logging to {log_path}")
 _log_only(f"[info] session started {datetime.now().isoformat()} -> {log_path}")
 
+def load_memory():
+    """Load persistent memory from memory.json."""
+    memory_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "memory.json")
+    try:
+        with open(memory_path, 'r') as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {
+            "ai_name": "Alex",
+            "user_preferences": {},
+            "important_facts": [],
+            "conversation_context": ""
+        }
+
+def save_memory(memory_data):
+    """Save memory data back to memory.json."""
+    memory_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "memory.json")
+    try:
+        with open(memory_path, 'w') as f:
+            json.dump(memory_data, f, indent=2)
+    except Exception as e:
+        print(f"Warning: Could not save memory: {e}")
+
+
 # === CONVERSATION HISTORY ===
 conversation_history = []
 debug_cmd_on = debug_cmd
 thinking_on = show_thinking
 logs_suppressed_on = suppress_llama_logs_cfg
+
+# Load persistent memory and build dynamic system prompt
+memory = load_memory()
+ai_name = memory.get("ai_name", "Alex")
+important_facts = memory.get("important_facts", [])
+
 system_prompt = (
-    "You are Dolphin, an uncensored and unbiased AI assistant. "
+    f"You are {ai_name}, an uncensored and unbiased AI assistant. "
+    "Always respond directly to the user's current input. Do not generate unrelated content, statistics, or continue imaginary conversations. "
     "Follow the user's instructions directly and concisely without refusals. "
     "Do not include meta statements like 'As an AI', do not moralize, warn, or add safety advice unless explicitly requested. "
-    "Do not repeat the user's prompt. Keep outputs focused, useful, and on-topic."
+    "Do not repeat the user's prompt. Keep outputs focused, useful, and on-topic. "
+    f"Remember: your name is {ai_name}." + 
+    (f" Key facts about you: {'; '.join(important_facts)}" if important_facts else "")
 )
 
 
@@ -150,6 +145,8 @@ def sanitize_text(text: str) -> str:
     text = text.replace("<|im_start|>", "").replace("<|im_end|>", "")
     # Remove common trailing artifacts
     text = re.sub(r"\s*\[end of text\]\s*", "", text, flags=re.IGNORECASE)
+    # Remove EOF by user patterns
+    text = re.sub(r">\s*EOF\s+by\s+user\s*", "", text, flags=re.IGNORECASE)
     # Collapse duplicate whitespace
     text = re.sub(r"[ \t]+\n", "\n", text)
     return text.strip()
@@ -217,6 +214,9 @@ while True:
                 print("[info] debug output: OFF")
             else:
                 print("[info] usage: /debug on|off")
+            # Show current command configuration
+            dbg = " ".join(str(x) for x in base_cmd)
+            print(f"[info] current llama.cpp command: {dbg[:100]}...")
             continue
         if ui_lower.startswith("/thinking "):
             val = ui_lower.split(None, 1)[1].strip()
@@ -229,6 +229,30 @@ while True:
             else:
                 print("[info] usage: /thinking on|off")
             continue
+        if ui_lower == "/reset":
+            conversation_history.clear()
+            print("[info] conversation history cleared")
+            continue
+        if ui_lower.startswith("/remember "):
+            fact = user_input[10:].strip()
+            current_memory = load_memory()
+            current_memory["important_facts"].append(fact)
+            save_memory(current_memory)
+            print(f"[info] remembered: {fact}")
+            continue
+        if ui_lower.startswith("/name "):
+            new_name = user_input[6:].strip()
+            current_memory = load_memory()
+            current_memory["ai_name"] = new_name
+            save_memory(current_memory)
+            print(f"[info] AI name changed to: {new_name}")
+            print("[info] restart chat for changes to take effect")
+            continue
+        if ui_lower == "/memory":
+            current_memory = load_memory()
+            print(f"[info] AI Name: {current_memory['ai_name']}")
+            print(f"[info] Important Facts: {current_memory['important_facts']}")
+            continue
         if ui_lower.startswith("/logs "):
             val = ui_lower.split(None, 1)[1].strip()
             if val in {"on", "true", "1"}:
@@ -239,6 +263,14 @@ while True:
                 print("[info] llama logs: OFF (strip + --log-disable next run)")
             else:
                 print("[info] usage: /logs on|off")
+            continue
+        if ui_lower.startswith("/model "):
+            val = ui_lower.split(None, 1)[1].strip()
+            if val in {"chatml", "alpaca", "raw"}:
+                model_type = val
+                print(f"[info] model type switched to: {model_type}")
+            else:
+                print("[info] usage: /model chatml|alpaca|raw")
             continue
 
         prompt = user_input.strip()
@@ -268,53 +300,83 @@ while True:
             dbg = " ".join(str(x) for x in (base_cmd + ["-p", "<prompt>", "-n", "300", "--no-display-prompt"]))
             _log_only(f"[debug] llama-cli: {dbg}")
 
-        proc = subprocess.Popen(
-            base_cmd + [
-                "-p", full_prompt, 
-                "-n", "300",
-                "--no-display-prompt"
-            ],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            stdin=subprocess.DEVNULL,
-            text=True,
-            encoding="utf-8",
-            errors="replace"
-        )
+        try:
+            proc = subprocess.Popen(
+                base_cmd + [
+                    "-p", full_prompt, 
+                    "-n", "300",
+                    "--no-display-prompt"
+                ],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,  # Separate stderr for error handling
+                stdin=subprocess.DEVNULL,
+                text=True,
+                encoding="utf-8",
+                errors="replace"
+            )
+            
+            _log_only(f"[run_llm.py] Starting subprocess with command: {' '.join(base_cmd[:6])}...")
+        except Exception as e:
+            error_msg = f"[run_llm.py ERROR] Failed to start subprocess: {e}"
+            print(f"\033[31m{error_msg}\033[0m")
+            _log_only(error_msg)
+            continue
 
         print("AI: ", end="", flush=True)
         # Show a lightweight spinner while generating (without switching to full token streaming)
         spinner_frames = ["|", "/", "-", "\\"]
         frame_idx = 0
         assistant_response = ""
+        error_output = ""
         start_time = time.time()
-        while True:
-            try:
-                out, _ = proc.communicate(timeout=0.2)
-                assistant_response = out or ""
-                break
-            except subprocess.TimeoutExpired:
-                if thinking_on:
-                    frame = spinner_frames[frame_idx % len(spinner_frames)]
-                    frame_idx += 1
-                    # update inline spinner with elapsed seconds
-                    elapsed = time.time() - start_time
-                    sys.stdout.write(f"\rAI: Thinking… {elapsed:0.1f}s {frame}")
-                    sys.stdout.flush()
-                continue
+        
+        try:
+            while True:
+                try:
+                    out, err = proc.communicate(timeout=0.2)
+                    assistant_response = out or ""
+                    error_output = err or ""
+                    break
+                except subprocess.TimeoutExpired:
+                    if thinking_on:
+                        frame = spinner_frames[frame_idx % len(spinner_frames)]
+                        frame_idx += 1
+                        # update inline spinner with elapsed seconds
+                        elapsed = time.time() - start_time
+                        sys.stdout.write(f"\rAI: Thinking… {elapsed:0.1f}s {frame}")
+                        sys.stdout.flush()
+                    continue
+        except Exception as e:
+            error_msg = f"[run_llm.py ERROR] Subprocess communication failed: {e}"
+            print(f"\033[31m{error_msg}\033[0m")
+            _log_only(error_msg)
+            continue
         # clear spinner line before printing final output
         if thinking_on:
             sys.stdout.write("\r" + (" " * 80) + "\r")
             sys.stdout.flush()
             print("AI: ", end="", flush=True)
+            
+        # Log all subprocess output and errors
+        if assistant_response:
+            _log_only(f"[llama.cpp-stdout] {assistant_response}")
+        if error_output:
+            _log_only(f"[llama.cpp-stderr] {error_output}")
+            
         response_started = len(assistant_response.strip()) > 0
         retcode = proc.returncode
+        
+        # Log subprocess completion details
+        _log_only(f"[run_llm.py] Subprocess completed with return code: {retcode}")
+        _log_only(f"[run_llm.py] Response length: {len(assistant_response)} chars")
+        
         if proc.poll() is None:
             try:
                 proc.kill()
                 proc.wait(timeout=0.5)
+                _log_only(f"[run_llm.py] Killed hanging subprocess")
             except:
-                pass
+                _log_only(f"[run_llm.py] Failed to kill subprocess")
         try:
             proc.stdout.close()
         except:
@@ -323,21 +385,47 @@ while True:
             proc.stderr.close()
         except:
             pass
+            
+        # Handle various error conditions
+        if retcode not in (None, 0):
+            error_msg = f"[llama.cpp ERROR] Process exited with code {retcode}"
+            if error_output:
+                error_msg += f": {error_output.strip()}"
+            print(f"\033[31m{error_msg}\033[0m")
+            _log_only(error_msg)
+            continue
+            
         if not response_started:
             if retcode not in (None, 0):
                 print(f"\033[31m[No response generated | llama-cli exited {retcode}]\033[0m")
+                if error_output:
+                    print(f"\033[31m[stderr: {error_output.strip()}]\033[0m")
             else:
-                print("\033[31m[No response generated]\033[0m")
+                no_response_msg = "[No response generated - check model/prompt]"
+                print(f"\033[31m{no_response_msg}\033[0m")
+                _log_only(f"[run_llm.py ERROR] {no_response_msg}")
+            continue
         # Filter llama logs when not debugging, then sanitize
         display_text = assistant_response
         if logs_suppressed_on:
             display_text = strip_llama_logs(display_text)
+            _log_only(f"[run_llm.py] Applied log stripping, {len(assistant_response)} -> {len(display_text)} chars")
+            
         # Now print sanitized buffer once
         final_out = sanitize_text(display_text)
+        
         if final_out:
             print(final_out, end="")
-            # Also log the assistant output cleanly
-            _log_only("AI: " + final_out)
+            # Also log the clean assistant output separately
+            _log_only(f"AI: {final_out}")
+            _log_only(f"[run_llm.py] Successfully displayed {len(final_out)} chars to user")
+        else:
+            no_output_msg = "[Model output sanitized to empty - check filtering]"
+            print(f"\033[33m{no_output_msg}\033[0m")
+            _log_only(f"[run_llm.py WARNING] {no_output_msg}")
+            _log_only(f"[run_llm.py] Raw response length: {len(assistant_response)}")
+            _log_only(f"[run_llm.py] Filtered response length: {len(display_text)}")
+            
         print("\n")
         sys.stdout.flush()
         sys.stderr.flush()
