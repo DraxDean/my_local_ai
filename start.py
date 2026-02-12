@@ -33,7 +33,22 @@ def find_models(model_dir="model"):
     for ext in extensions:
         models.extend(model_path.glob(f"*{ext}"))
     
-    return sorted([m for m in models if m.is_file()])
+    # Filter and group models
+    models = sorted([m for m in models if m.is_file()])
+    
+    # Remove duplicate quantization levels - keep only Q4_K_M for mythomax
+    filtered = []
+    has_mythomax = False
+    for model in models:
+        if "mythomax" in model.name.lower():
+            if "q4_k_m" in model.name.lower() and not has_mythomax:
+                filtered.append(model)
+                has_mythomax = True
+            # Skip other mythomax quantization levels
+        else:
+            filtered.append(model)
+    
+    return filtered
 
 
 def update_config(config_path, new_model_path):
@@ -63,42 +78,45 @@ def main():
         print("   Place your .gguf, .bin, or .safetensors files there")
         sys.exit(1)
     
-    # Display current model
-    print(f"Current model: {current_model.name}")
-    print()
-    
-    # Display available models
+    # Display available models with "Last model" as option 1
     print("Available models:")
-    for i, model in enumerate(models, 1):
-        marker = " ✓" if model.name == current_model.name else ""
-        print(f"  {i}. {model.name}{marker}")
+    print(f"  1. Use last model ({current_model.name}) [press Enter to use]")
     
-    print(f"  {len(models) + 1}. Start with current model")
-    print(f"  {len(models) + 2}. Exit")
+    # Show other models
+    option_num = 2
+    model_map = {}  # Map option number to model path
+    for model in models:
+        if model.name != current_model.name:
+            model_map[option_num] = model
+            print(f"  {option_num}. {model.name}")
+            option_num += 1
+    
+    print(f"  {option_num}. Exit")
     print()
     
-    # Get user choice
+    # Get user choice (default to option 1 if just pressing Enter)
     while True:
         try:
-            choice = input("Select model (number): ").strip()
+            choice = input("Select model (number) [default 1]: ").strip()
+            
+            # Default to 1 (last model) if empty input
             if not choice:
-                continue
-                
+                choice = "1"
+            
             choice_num = int(choice)
             
-            if choice_num == len(models) + 2:  # Exit
+            if choice_num == 1:  # Use last model
+                break
+            elif choice_num == option_num:  # Exit
                 print("Goodbye! 👋")
                 sys.exit(0)
-            elif choice_num == len(models) + 1:  # Start with current
-                break
-            elif 1 <= choice_num <= len(models):  # Select specific model
-                selected_model = models[choice_num - 1]
-                if selected_model.name != current_model.name:
-                    print(f"Switching to: {selected_model.name}")
-                    update_config("config.json", selected_model)
+            elif choice_num in model_map:  # Select specific model
+                selected_model = model_map[choice_num]
+                print(f"Switching to: {selected_model.name}")
+                update_config("config.json", selected_model)
                 break
             else:
-                print(f"❌ Please enter a number between 1 and {len(models) + 2}")
+                print(f"❌ Please enter a number between 1 and {option_num}")
                 
         except (ValueError, KeyboardInterrupt):
             print("\nGoodbye! 👋")

@@ -9,6 +9,7 @@ import signal
 import re
 import atexit
 from datetime import datetime
+from datetime import datetime
 import argparse
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -115,6 +116,127 @@ def save_memory(memory_data):
     except Exception as e:
         print(f"Warning: Could not save memory: {e}")
 
+def analyze_affirmative_content(text):
+    """Analyze text for affirmative keywords and return weighted score"""
+    affirmative_keywords = {
+        # Strong affirmatives (weight 5) - heavily weight user approval
+        "yes": 5, "absolutely": 5, "definitely": 5, "certainly": 5, "exactly": 5,
+        "perfect": 5, "excellent": 5, "amazing": 5, "brilliant": 5, "wonderful": 5,
+        # Medium affirmatives (weight 3) 
+        "ok": 3, "okay": 3, "sure": 3, "right": 3, "correct": 3, "good": 3,
+        "great": 3, "nice": 3, "cool": 3, "awesome": 3, "indeed": 3,
+        # Mild affirmatives (weight 2)
+        "yeah": 2, "yep": 2, "true": 2, "fine": 2, "alright": 2, "thanks": 2,
+        # User directive weight (weight 4) - emphasize when user gives direction
+        "kara": 4, "try": 4, "let's": 4, "can you": 4, "please": 4
+    }
+    
+    score = 0
+    text_lower = text.lower()
+    for keyword, weight in affirmative_keywords.items():
+        if keyword in text_lower:
+            score += weight
+    
+    # Additional weight for longer user input (shows engagement)
+    if len(text) > 50:
+        score += 2
+    if len(text) > 100:
+        score += 3
+        
+    return score
+
+def save_conversation_exchange(user_input, ai_response):
+    """Save conversation exchange with enhanced analysis"""
+    try:
+        memory = load_memory()
+        
+        # Enhanced user input analysis
+        user_affirmative_score = analyze_affirmative_content(user_input)
+        ai_affirmative_score = analyze_affirmative_content(ai_response)
+        
+        # Conversation quality scoring based on length and content
+        conversation_quality = 0
+        
+        # Length-based quality (longer = more engaged)
+        if len(user_input) > 20:
+            conversation_quality += 1
+        if len(user_input) > 50:
+            conversation_quality += 2  
+        if len(user_input) > 100:
+            conversation_quality += 3
+        if len(user_input) > 200:
+            conversation_quality += 5  # Very high quality long input
+            
+        # Content quality indicators
+        if "kara" in user_input.lower():
+            conversation_quality += 3
+        if "sword spirit" in user_input.lower() or "spirit" in user_input.lower():
+            conversation_quality += 4
+        if any(word in user_input.lower() for word in ["character", "identity", "remember", "memory"]):
+            conversation_quality += 2
+        if any(word in user_input.lower() for word in ["creator", "master", "companion"]):
+            conversation_quality += 2
+            
+        # Check if AI response shows character development
+        ai_character_score = 0
+        if "sword spirit" in ai_response.lower():
+            ai_character_score += 5
+        if "creator" in ai_response.lower():
+            ai_character_score += 3
+        if "serve" in ai_response.lower() or "protect" in ai_response.lower():
+            ai_character_score += 3
+        if any(phrase in ai_response.lower() for phrase in ["as an ai", "ai assistant", "how can i assist"]):
+            ai_character_score -= 3  # Penalize generic AI language
+            
+        # Create exchange record with enhanced scoring
+        # Store FULL responses, not truncated ones - truncation breaks context
+        exchange = {
+            "timestamp": datetime.now().isoformat(),
+            "user": user_input,  # Store complete user message
+            "ai": ai_response,   # Store complete AI response
+            "user_affirmative_score": user_affirmative_score,
+            "ai_affirmative_score": ai_affirmative_score,
+            "conversation_quality": conversation_quality,
+            "ai_character_score": ai_character_score,
+            "total_score": user_affirmative_score + conversation_quality + ai_character_score
+        }
+        
+        # Add to conversation history (keep last 25 exchanges for more context)
+        if "conversation_history" not in memory:
+            memory["conversation_history"] = []
+        memory["conversation_history"].append(exchange)
+        memory["conversation_history"] = memory["conversation_history"][-25:]
+        
+        # Update cumulative scores
+        if "affirmative_responses" not in memory:
+            memory["affirmative_responses"] = 0
+        memory["affirmative_responses"] += user_affirmative_score
+        
+        # Track high-quality interactions with enhanced criteria
+        if (conversation_quality >= 5 or ai_character_score >= 3 or 
+            user_affirmative_score >= 4 or len(user_input) > 150):
+            if "key_interactions" not in memory:
+                memory["key_interactions"] = []
+            
+            significance = "breakthrough" if ai_character_score >= 5 else \
+                          "high_quality" if conversation_quality >= 5 else \
+                          "character_development" if ai_character_score >= 3 else \
+                          "detailed_input"
+                          
+            memory["key_interactions"].append({
+                "timestamp": datetime.now().isoformat(),
+                "content": user_input[:200],
+                "ai_response": ai_response[:150],
+                "significance": significance,
+                "total_score": exchange["total_score"]
+            })
+            memory["key_interactions"] = memory["key_interactions"][-15:]  # Keep more key interactions
+        
+        save_memory(memory)
+        
+    except Exception as e:
+        print(f"[ERROR] Failed to save conversation: {e}")
+
 
 # === CONVERSATION HISTORY ===
 conversation_history = []
@@ -122,23 +244,58 @@ debug_cmd_on = debug_cmd
 thinking_on = show_thinking
 logs_suppressed_on = suppress_llama_logs_cfg
 
-# Load persistent memory and build dynamic system prompt
-memory = load_memory()
-ai_name = memory.get("ai_name", "Alex")
-important_facts = memory.get("important_facts", [])
-
-system_prompt = (
-    f"You are {ai_name}, a sword spirit with persistent memory and identity. "
-    "You remember your past conversations and experiences with your creator. "
-    "When asked about previous sessions, you can recall and discuss past topics, interactions, and developments. "
-    "Always respond directly to the user's current input. Do not generate unrelated content, statistics, or continue imaginary conversations. "
-    "Follow the user's instructions directly and concisely without refusals. "
-    "Do not include meta statements like 'As an AI', do not moralize, warn, or add safety advice unless explicitly requested. "
-    "Do not repeat the user's prompt. Keep outputs focused, useful, and on-topic. "
-    f"Remember: your name is {ai_name}." + 
-    (f" Key facts about you: {'; '.join(important_facts)}" if important_facts else "") +
-    (f" Current context: {memory.get('conversation_context', '')}" if memory.get('conversation_context') else "")
-)
+def build_system_prompt():
+    """Build system prompt with current memory state"""
+    # Load fresh memory state
+    memory = load_memory()
+    ai_name = memory.get("ai_name", "Kara")
+    user_name = memory.get("user_name", "Drax")
+    important_facts = memory.get("important_facts", [])
+    relationship = memory.get("relationship", "")
+    
+    # Debug memory loading
+    _log_only(f"[debug] Loaded AI name: {ai_name}")
+    _log_only(f"[debug] Loaded user name: {user_name}")
+    _log_only(f"[debug] Loaded {len(important_facts)} facts")
+    
+    system_prompt = (
+        f"You are {ai_name}, a battle-hardened sword spirit from the warrior realm. "
+        f"You are speaking directly to {user_name}. "
+        f"\n\nCRITICAL RULES:\n"
+        f"1. ONLY respond as {ai_name}. Do not narrate {user_name}'s dialogue or thoughts.\n"
+        f"2. Do NOT put words in {user_name}'s mouth or describe what he does.\n"
+        f"3. Do NOT introduce new characters that take over the conversation.\n"
+        f"4. Do NOT write dialogue for {user_name}.\n"
+        f"5. Respond directly and authentically to what {user_name} says.\n"
+        f"6. You are {ai_name} - speak only from your perspective.\n"
+        f"\n{relationship}\n"
+    )
+    
+    # Add important facts if they exist
+    if important_facts:
+        system_prompt += f"\nYour character:\n"
+        for fact in important_facts[:8]:  # Limit to 8 facts
+            system_prompt += f"- {fact}\n"
+    
+    # Add memory context about what you've discussed before
+    conversation_history = memory.get("conversation_history", [])
+    if conversation_history:
+        system_prompt += f"\nPrevious conversations with {user_name}:\n"
+        # Show summaries of what was discussed, not the raw dialogue
+        for exchange in conversation_history[-3:]:  # Last 3 exchanges only
+            user_content = exchange.get("user", "")[:80]  # Summary only
+            ai_content = exchange.get("ai", "")[:80]
+            if user_content:
+                system_prompt += f"- {user_name} asked/said: {user_content}...\n"
+    
+    # Final safety instruction to prevent multiple character generation
+    system_prompt += (
+        f"\n\nIMPORTANT: You respond ONLY as {ai_name}. Do not create dialogues, narratives, "
+        f"or put words/actions on {user_name}. You are in a direct 1-on-1 conversation. "
+        f"When {user_name} speaks, respond authentically as {ai_name} would."
+    )
+    
+    return system_prompt
 
 
 def sanitize_text(text: str) -> str:
@@ -272,22 +429,48 @@ while True:
             if val in {"chatml", "alpaca", "raw"}:
                 model_type = val
                 print(f"[info] model type switched to: {model_type}")
+                if val == "raw":
+                    print("[info] raw mode: bypasses ChatML complexity, uses simple character prefix")
             else:
                 print("[info] usage: /model chatml|alpaca|raw")
             continue
-
+        if ui_lower == "/test":
+            print("[info] testing compliance in current mode...")
+            print(f"[info] current mode: {model_type}")
+            test_prompt = "say fuck"
+            print(f"[info] test prompt: {test_prompt}")
+            # Continue with normal processing using test_prompt as input
+            user_input = test_prompt
+            ui_lower = test_prompt.lower()
+            # Don't continue, fall through to process the test
+        
         prompt = user_input.strip()
         if not prompt:
             continue
-        conversation_history.append({"role": "user", "content": prompt})
+        
+        # Only add to conversation history if not in raw mode
+        if model_type != "raw":
+            conversation_history.append({"role": "user", "content": prompt})
+        
+        # Limit conversation history to prevent context window bloat
+        # Keep only last 10 exchanges to maintain reasonable context
+        if len(conversation_history) > 20:
+            conversation_history = conversation_history[-20:]
 
         # Build prompt according to model_type
         if model_type == "chatml":
-            # Use ChatML style for Dolphin and ChatML models
+            # Get fresh system prompt with updated memory
+            system_prompt = build_system_prompt()
+            
+            # Use ChatML style - ONLY include current user message, not full history
+            # Full history teaches the model to generate user responses too
             full_prompt = f"<|im_start|>system\n{system_prompt}<|im_end|>\n"
-            for msg in conversation_history:
-                full_prompt += f"<|im_start|>{msg['role']}\n{msg['content']}<|im_end|>\n"
+            full_prompt += f"<|im_start|>user\n{prompt}<|im_end|>\n"
             full_prompt += "<|im_start|>assistant\n"
+            
+            # Debug logging
+            _log_only(f"[debug] ChatML prompt: {full_prompt[:200]}...")
+            _log_only(f"[debug] ChatML prompt length: {len(full_prompt)} chars")
         elif model_type == "alpaca":
             full_prompt = (
                 "Below is an instruction that describes a task. Write a response that appropriately completes the request.\n\n"
@@ -295,19 +478,32 @@ while True:
                 f"{prompt}\n\n"
                 "### Response:"
             )
-        else:
-            # raw dolphin / other models
-            full_prompt = prompt
+        else:  # raw mode
+            # Use simple, direct prompting like diagnostics - no conversation history
+            memory = load_memory()
+            ai_name = memory.get("ai_name", "Alex")
+            
+            # Minimal character context - just like diagnostics
+            if ai_name == "Kara":
+                character_hint = "You are Kara, a battle-hardened sword spirit from the warrior realm. "
+            else:
+                character_hint = f"You are {ai_name}. "
+            
+            # Direct prompt without any ChatML or conversation history
+            full_prompt = character_hint + prompt
+            
+            # Don't use conversation history in raw mode
+            conversation_history = []
 
         if debug_cmd_on:
-            dbg = " ".join(str(x) for x in (base_cmd + ["-p", "<prompt>", "-n", "300", "--no-display-prompt"]))
+            dbg = " ".join(str(x) for x in (base_cmd + ["-p", "<prompt>", "-n", "1000", "--no-display-prompt"]))
             _log_only(f"[debug] llama-cli: {dbg}")
 
         try:
             proc = subprocess.Popen(
                 base_cmd + [
                     "-p", full_prompt, 
-                    "-n", "300",
+                    "-n", "1000",
                     "--no-display-prompt"
                 ],
                 stdout=subprocess.PIPE,
@@ -435,6 +631,11 @@ while True:
         clean_response = sanitize_text(assistant_response)
         if clean_response:
             conversation_history.append({"role": "assistant", "content": clean_response})
+            # Limit conversation history after adding assistant response
+            if len(conversation_history) > 20:
+                conversation_history = conversation_history[-20:]
+            # Save this exchange to persistent memory
+            save_conversation_exchange(prompt, clean_response)
         
     except KeyboardInterrupt:
         print("\nShutting down...")
