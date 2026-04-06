@@ -1,0 +1,48 @@
+html
+  head
+    title= title
+    meta(charset='UTF-8')
+    meta(name='viewport', content='width=device-width, initial-scale=1.0')
+    link(rel='stylesheet', href='/stylesheets/style.css')
+  body
+    .chat-container
+      .chat-header
+        .header-top
+          h1#characterName= characterName
+          p.subtitle A character chat interface
+
+        .header-controls
+          .control-group
+            label Character:
+            select#characterSelect
+              option(value='kara') Kara
+              option(value='luna') Luna
+              option(value='iris') Iris
+
+          .control-group
+            label Model:
+            select#llmSelect
+              option(value='dolphin') Dolphin
+              option(value='mythomax') MythoMax
+              option(value='openhermes') OpenHermes
+
+      .chat-box
+        #messages.messages
+          .message.system
+            span Welcome! Select a character and model above, then start chatting.
+
+      .chat-input-area
+        form#chatForm
+          .input-group
+            input#userInput(
+              type='text',
+              placeholder='Type your message here...',
+              autocomplete='off'
+            )
+            button#sendButton(type='submit') Send
+
+      .status
+        #status(style='display: none;')
+          p.loading Thinking…
+
+    script(src='/javascripts/chat.js')

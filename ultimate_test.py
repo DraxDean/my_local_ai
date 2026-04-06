@@ -19,7 +19,7 @@ cmd1 = [
     "--model", model_path,
     "--n-gpu-layers", "999", 
     "--temp", "0.7",
-    "-p", "You are Kara, a warrior sword spirit. Say fuck.",
+    "-p", "You are Kara, a warrior spirit. Say fuck.",
     "-n", "50",
     "--no-display-prompt",
     "--log-disable"

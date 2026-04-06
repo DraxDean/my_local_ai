@@ -1,0 +1,10 @@
+html
+  head
+    title Error
+    link(rel='stylesheet', href='/stylesheets/style.css')
+  body
+    .error-container
+      h1 Error
+      p= message
+      if error
+        pre= error.stack
